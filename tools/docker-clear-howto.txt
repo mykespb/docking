@@ -1,0 +1,103 @@
+Another method, which I got from Guillaume J. Charmes (credit where it is due):
+
+docker rm `docker ps --no-trunc -aq`
+will remove all containers in an elegant way.
+	
+Another method, which I got from Guillaume J. Charmes (credit where it is due):
+
+docker rm `docker ps --no-trunc -aq`
+will remove all containers in an elegant way.
+
+share|improve this answer
+edited Jun 23 at 7:52
+
+answered Aug 9 '13 at 6:41
+
+qkrijger
+3,35041127
+6	 	
+this somehow doesnt work for me, but docker ps -a -q | xargs docker rm works, (sudo may be needed) –  FUD Jan 9 at 9:29 
+17	 	
+what about docker rm $(docker ps -a -q) ? –  qkrijger Jan 9 at 20:48
+1	 	
+@qkrijger, this doesn't change anything from your original answer, except for adding bashism. The problem is with command line overflow. xargs variant deals with it in a nice way. I would also add --no-trunk to docker ps to avoid (unlikely) id clashes. –  Ihor Kaharlichenko Feb 7 at 22:32
+  	 	
+@IhorKaharlichenko You are right, thanks for the elaboration. Also, good idea on the notrunc option. I updated the answer with it and will update my scripts as well ☺ –  qkrijger Feb 9 at 0:08
+10	 	
+--notrunc is invalid option. Should be --no-trunc –  chuwy Feb 9 at 15:24
+
+---
+
+14
+down vote
+If you do not like to remove all containers, you can select all containers created before or after a specific container with docker ps --before <container-ID> or with docker ps --since <container-ID>. This feature is at least in docker version 0.6.5.
+
+Let's say You have developed your system, now it is working but there are a number of containers left. You want to remove containers created before that working version. Determine the ID of the working container with docker ps.
+
+Remove containers created before an other container
+
+docker rm $(docker ps --before 9c49c11c8d21 -q)
+Another example. You have your database already running on a docker container. You have developed your application to run on an other container and now You have a number of unneeded containers.
+
+Remove containers created after a certain container
+
+docker rm $(docker ps --since a6ca4661ec7f -q)
+Docker stores containers in /var/lib/docker/containers in Ubuntu. I think extra containers do no other harm but take up disk space.
+
+share|improve this answer
+edited Apr 18 at 21:38
+
+David Braun
+758413	
+answered Nov 7 '13 at 7:35
+
+vesako
+41116
+  	 	
+Awesome, THIS is what I want. Thank you. –  David Braun Apr 18 at 21:36
+
+---
+
+http://www.tekhead.org/blog/2014/09/docker-part-2-howto-remove-delete-docker-containers/
+
+So you have been messing with docker for a few minutes or hours, and now you have a bunch of either running or stopped containers you no longer need. How do you get rid of them?
+
+Removing Single Containers
+To remove a single docker container, you simply start by listing all of the docker containers (started or stopped) to ensure you know which one to delete:
+
+$ sudo docker ps –a
+
+Then remove the chosen container:
+
+$ sudo docker rm <container name>
+
+If the container is currently running you can simply add –f to stop and remove the container in a single command:
+
+$ docker rm -f <container name>
+
+Unless it’s paused, then you will get an error something like the following:
+
+Error response from daemon: Could not kill running container, cannot remove - Container e4f28eccb0cbcfbf4d78104bfe3e84039f62c5073f7301f8a39bb77a9598ae72 is paused. Unpause the container before stopping
+
+This is easy to resolve. The “docker pause” command was added as of Docker 1.0, allowing for better resource utilisation if you have containers you don’t currently need to be wasting CPU cycles. As of Docker 1.1, running containers are also paused during commit activities, to ensure a consistent file system. Simply check the ID of the VM (with a ps command), unpause it, then remove:
+
+sudo docker ps
+sudo docker unpause <container id>
+sudo docker rm -f <container id>
+ 
+
+Removing Multiple Containers
+Sometimes we have built up a number of containers and we just want to scrub the lot in one go. If you want to remove all containers (running or not), first you need to generate a list of all of the container IDs, then you pass that list to the docker rm command as follows:
+
+sudo docker rm -f $(sudo docker ps -aq)
+
+Alternatively if you wish to remove only the non-running containers:
+
+sudo docker rm $(sudo docker ps -q)
+ 
+
+That’ll do for now, but in the next post I will go into how to install your first app…
+
+---
+
+
