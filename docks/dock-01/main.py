@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # 2014-10-29 5.2. myke: ping-pong for docker
+# Mikhail (myke) Kolodin, 2014
 
 from __future__ import division, print_function
 
